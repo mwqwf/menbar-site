@@ -1,0 +1,72 @@
+# موقع منبر ادكصهك — تطبيق ويب صوتي
+
+الموقع الرسمي `https://minbar-adkassahk.vercel.app`، وقد صار **تطبيق ويب كاملاً**
+يعرض نفس مكتبة تطبيق أندرويد ويشغّلها مباشرة من المتصفّح — مفتوح المصدر بالكامل.
+
+## المزايا
+- **مزامنة حيّة**: يقرأ الكتالوج (الأقسام والأقسام الفرعية والدروس) مباشرة من
+  Firestore عبر REST — أي درس يُنشر في التطبيق يظهر هنا فوراً، بلا خادم وسيط.
+- مكتبة مصنّفة: أقسام رئيسية ← فرعية ← دروس (مع العدّادات) + «أحدث الدروس»
+  و«مختارات المنبر».
+- بحث عربي مطبَّع (يتجاهل التشكيل والهمزات والتاء المربوطة والألف المقصورة).
+- مشغّل سفلي دائم: تشغيل/إيقاف، شريط تقدّم، سرعات 0.75–2×، قفز ±10ث،
+  التالي/السابق ضمن القائمة، ويستمر أثناء التصفّح (SPA بتوجيه `#/…`).
+- تخصيص محلي بلا حسابات (`localStorage`): مفضّلة، «تابع الاستماع» (حفظ الموضع
+  كل ~5 ثوانٍ والاستئناف)، سجلّ استماع.
+- سمة فاتحة/داكنة (تتبع النظام + مبدّل محفوظ)، تصميم متجاوب RTL.
+- Media Session API (أزرار قفل الشاشة) + اختصارات لوحة مفاتيح (مسافة = تشغيل).
+- كاش ثم مزامنة: الكتالوج يُخزَّن محلياً فيُرسم فوراً ثم يُحدَّث في الخلفية —
+  نفس فلسفة التطبيق.
+
+## البنية
+| الملف | المسار على الويب |
+|---|---|
+| `index.html` | `/` — التطبيق (توجيه `#/category/…`، `#/sub/…`، `#/lesson/…`، `#/search`، `#/mylists`) |
+| `lesson.html` | `/lesson/<id>` — صفحة الروابط العميقة، تعرض الدرس **وتشغّله في الصفحة** |
+| `assets/app.css`، `assets/app.js` | الأنماط والمنطق المشترك (بلا أي تبعيّات أو npm) |
+| `privacy.html` | `/privacy` — سياسة الخصوصية (المسجَّلة في Play Console) |
+| `.well-known/assetlinks.json` | توثيق Android App Links |
+
+**البيانات:** مشروع Firebase `mxqp-8d1e8`، مجموعات `categories` /
+`subcategories` / `lessons`، قراءتها عامّة بقواعد Firestore. مفتاح الويب في
+`app.js` عامّ ومقصود (هو نفسه المضمَّن في تطبيق أندرويد مفتوح المصدر) ولا يمنح
+أي صلاحية كتابة. الترشيح بـ`publishAt` والترتيب بـ`createdAt` يطابقان
+`ContentRepository.kt` في التطبيق.
+
+## ⚠️ إعادة النشر — الصيغة الإلزامية
+مشروع Vercel مضبوط على إطار Next.js، فأي نشر ثابت عادي يفشل بـ `NEXT_NO_VERSION`.
+الحل الوحيد المجرَّب: `vercel.json` بالصيغة الكلاسيكية (لا تُحذف ولا تُبسَّط):
+
+```json
+{
+  "version": 2,
+  "builds": [{ "src": "**", "use": "@vercel/static" }],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "^/privacy/?$", "dest": "/privacy.html" },
+    { "src": "^/lesson/[^/]+/?$", "dest": "/lesson.html" },
+    { "src": "^/$", "dest": "/index.html" }
+  ]
+}
+```
+
+## 🔑 assetlinks.json — لا تحذف أي بصمة
+ثلاث بصمات SHA-256 يجب بقاؤها جميعاً:
+1. **Play App Signing** (`AD:35:8A:…`) — نسخة المستخدمين من المتجر. حذفها يكسر
+   روابط المشاركة لكل الجمهور.
+2. مفتاح الإصدار المحلي (`BF:D6:D8:…`) — نسخ APK المبنية من الجهاز.
+3. debug (`57:44:49:…`) — للتجربة أثناء التطوير.
+
+استخراج بصمة أي APK:
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+& "$env:LOCALAPPDATA\Android\Sdk\build-tools\37.0.0\apksigner.bat" verify --print-certs app.apk
+```
+
+## التحقق بعد أي نشر
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://minbar-adkassahk.vercel.app/lesson/test
+curl -s https://minbar-adkassahk.vercel.app/.well-known/assetlinks.json
+curl -s -o /dev/null -w "%{http_code}\n" https://minbar-adkassahk.vercel.app/assets/app.js
+```
+ويجب أن يعيد الأول والأخير `200` والثاني ملف JSON بالبصمات الثلاث.
