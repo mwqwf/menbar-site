@@ -1,5 +1,8 @@
 # موقع منبر ادكصهك — تطبيق ويب صوتي
 
+> **🎧 استمع الآن على الويب:** [minbar-adkassahk.vercel.app](https://minbar-adkassahk.vercel.app) — مئات الدروس الصوتية العلمية لمشايخ ادكصهك، تُشغَّل مباشرة من المتصفّح.
+> **📱 التطبيق على أندرويد:** [Google Play](https://play.google.com/store/apps/details?id=com.ali.menbaradkshk) · **▶️ قناتنا:** [يوتيوب](https://youtube.com/@mtfail)
+
 الموقع الرسمي `https://minbar-adkassahk.vercel.app`، وقد صار **تطبيق ويب كاملاً**
 يعرض نفس مكتبة تطبيق أندرويد ويشغّلها مباشرة من المتصفّح — مفتوح المصدر بالكامل.
 
