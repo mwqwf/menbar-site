@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# خريطة الموقع تُولَّد ذاتياً من كتالوج التطبيق (تشمل كل درس منشور).
+Sitemap: https://minbar-adkassahk.vercel.app/sitemap.xml

@@ -584,14 +584,19 @@
      الموجّه (توجيه بالوسم #/…) + دعم مسار /lesson/:id العميق
      ------------------------------------------------------------ */
   function parseRoute() {
-    // الروابط العميقة من التطبيق: /lesson/<id> تُخدَم بهذه الصفحة مباشرة
-    const pathMatch = location.pathname.match(/^\/lesson\/([^/]+)\/?$/);
+    // المسارات الحقيقية القابلة للفهرسة: /lesson/<id> و/category/<id>
+    // و/section/<id>. الخادم يعرضها بعنوانها ووصفها الحقيقيين (api/render.js)،
+    // وهنا نكمل العرض التفاعلي بنفس العروض المستعملة في التوجيه بالوسم.
+    const pathMatch = location.pathname.match(/^\/(lesson|category|section)\/([^/]+)\/?$/);
     const hash = location.hash.replace(/^#\/?/, '');
     if (hash) {
       const parts = hash.split('/');
       return { name: parts[0] || 'home', arg: decodeURIComponent(parts[1] || ''), query: parts.slice(1).join('/') };
     }
-    if (pathMatch) return { name: 'lesson', arg: decodeURIComponent(pathMatch[1]) };
+    if (pathMatch) {
+      const kind = pathMatch[1] === 'section' ? 'sub' : pathMatch[1];
+      return { name: kind, arg: decodeURIComponent(pathMatch[2]) };
+    }
     return { name: 'home', arg: '' };
   }
 

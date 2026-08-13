@@ -6,13 +6,17 @@
   ],
   "routes": [
     { "src": "^/api/catalog/?$", "dest": "/api/catalog.js" },
+    { "src": "^/sitemap\\.xml$", "dest": "/api/sitemap.js" },
     {
       "src": "^/assets/(.*)$",
       "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@171249b5088e83569ffaa8a9945e80ee8e5ef724/assets/$1"
     },
+    { "src": "^/robots\\.txt$", "dest": "/robots.txt" },
     { "handle": "filesystem" },
     { "src": "^/privacy/?$", "dest": "/privacy.html" },
-    { "src": "^/lesson/[^/]+/?$", "dest": "/lesson.html" },
+    { "src": "^/lesson/[^/]+/?$", "dest": "/api/render.js" },
+    { "src": "^/category/[^/]+/?$", "dest": "/api/render.js" },
+    { "src": "^/section/[^/]+/?$", "dest": "/api/render.js" },
     { "src": "^/$", "dest": "/index.html" }
   ]
 }
