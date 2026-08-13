@@ -9,7 +9,7 @@
     { "src": "^/sitemap\\.xml$", "dest": "/api/sitemap.js" },
     {
       "src": "^/assets/(.*)$",
-      "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@171249b5088e83569ffaa8a9945e80ee8e5ef724/assets/$1"
+      "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@6f24f2a31f1b6544138fb6b91ff108f875a82137/assets/$1"
     },
     { "src": "^/robots\\.txt$", "dest": "/robots.txt" },
     { "handle": "filesystem" },
