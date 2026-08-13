@@ -1,87 +1,29 @@
 /* ============================================================
-   عرض خادمي للصفحات القابلة للفهرسة: /lesson/:id و/category/:id
-   و/section/:id.
+   العرض الخادمي لكل صفحات منبر القابلة للفهرسة:
+   `/` و`/lesson/:id` و`/category/:id` و`/section/:id`.
 
-   لماذا؟ محرّكات البحث كانت ترى صفحة فارغة بعنوان واحد مكرّر لكل
-   الدروس، لأن المحتوى كلّه يُرسم في المتصفّح بعد جلب الكتالوج. هنا
-   نحقن في HTML — قبل وصوله للزائر — العنوان الحقيقي والوصف وبيانات
-   Schema.org ومحتوى نصّياً مقروءاً. ثم يتولّى app.js العرض التفاعلي
-   كالمعتاد فلا تتغيّر أي وظيفة للمستخدم.
+   لماذا؟ محرّكات البحث كانت ترى صفحة فارغة مكتوباً فيها «هذا الموقع يحتاج
+   JavaScript»، لأن المحتوى كلّه يُرسم في المتصفّح — فلم تُفهرس ولا صفحة
+   واحدة. هنا يصل HTML وفيه العنوان الحقيقي والوصف وبيانات Schema.org
+   **ومحتوى نصّي وروابط داخلية** يمشي عليها الزاحف إلى كل درس. ثم يتولّى
+   `app.js` العرض التفاعلي كالمعتاد، فلا تتغيّر أي وظيفة للمستخدم.
 
-   خفيف بحكم التصميم: وثيقة واحدة تُجلب للدرس (لا مسح للمجموعة)،
-   والنتيجة مخزَّنة في كاش الحافة فلا تتكرّر القراءة لكل زائر.
+   خفيف بحكم التصميم: صفحة الدرس تجلب وثيقة واحدة (لا مسح للمجموعة)،
+   والرئيسية تُخزَّن في كاش الحافة فلا تتكرّر قراءتها لكل زائر.
    ============================================================ */
 'use strict';
 
 const {
   SITE, fetchDoc, fetchCollection, toCategory, toSubcategory, toLesson,
-  unwrap, text, num, timeMillis, escapeHtml, isoDuration, isPublished,
+  unwrap, text, escapeHtml, isoDuration, isPublished,
 } = require('./_lib');
+const { shell, BRAND, PLAY_URL } = require('./_shell');
 
-const BRAND = 'منبر ادكصهك';
 const DEFAULT_DESC =
   'منصّة تحفظ إرث مشايخ ادكصهك: مئات الدروس الصوتية العلمية مصنّفة بحسب ' +
   'العلوم، تستمع إليها مباشرة من المتصفّح.';
 
-/* هيكل الصفحة نفسه المستعمل في الموقع، مع فتحات للحقن. */
-function shell({ title, description, canonical, jsonLd, bodyIntro }) {
-  return `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${escapeHtml(title)}</title>
-<meta name="description" content="${escapeHtml(description)}"/>
-<link rel="canonical" href="${escapeHtml(canonical)}"/>
-<meta name="theme-color" content="#0a2b33"/>
-<meta property="og:type" content="website"/>
-<meta property="og:site_name" content="${escapeHtml(BRAND)}"/>
-<meta property="og:locale" content="ar_AR"/>
-<meta property="og:title" content="${escapeHtml(title)}"/>
-<meta property="og:description" content="${escapeHtml(description)}"/>
-<meta property="og:url" content="${escapeHtml(canonical)}"/>
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="${escapeHtml(title)}"/>
-<meta name="twitter:description" content="${escapeHtml(description)}"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/assets/app.css"/>
-<script type="application/ld+json">${jsonLd}</script>
-<script>
-/* تطبيق السمة قبل أول رسم لتفادي وميض السمة الخاطئة */
-(function(){try{var t=JSON.parse(localStorage.getItem('menbar_theme'));
-if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
-document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
-</script>
-</head>
-<body>
-
-<header class="site">
-  <div class="wrap nav">
-    <a class="brand" href="/"><span class="dot"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4zm-6 9a6 6 0 0 0 12 0h2a8 8 0 0 1-7 7.94V22h-2v-2.06A8 8 0 0 1 4 12h2z"/></svg></span>${escapeHtml(BRAND)}</a>
-    <nav class="navlinks">
-      <a href="/#/" data-route="home">المكتبة</a>
-      <a href="/#/search" data-route="search">بحث</a>
-      <a href="/#/mylists" data-route="mylists">قوائمي</a>
-    </nav>
-    <span class="spacer"></span>
-    <button class="iconbtn" id="themeBtn" title="السمة الفاتحة/الداكنة" aria-label="تبديل السمة">🌙</button>
-    <a class="store" href="https://play.google.com/store/apps/details?id=com.ali.menbaradkshk" target="_blank" rel="noopener">حمّل التطبيق</a>
-  </div>
-</header>
-
-<main id="app">
-${bodyIntro}
-</main>
-
-<script src="/assets/app.js"></script>
-</body>
-</html>
-`;
-}
-
-/* محتوى نصّي يراه الزاحف فوراً (ويستبدله app.js بالواجهة التفاعلية). */
+/* المحتوى الذي يراه الزاحف داخل #app قبل أن يستبدله app.js. */
 function introBlock(heading, paragraphs, links) {
   let html = '<div class="wrap"><article class="ssr-intro">';
   html += '<h1>' + escapeHtml(heading) + '</h1>';
@@ -99,6 +41,109 @@ function introBlock(heading, paragraphs, links) {
   return html;
 }
 
+/* ---------- الرئيسية ---------- */
+async function renderHome() {
+  const [categories, subcategories, lessons] = await Promise.all([
+    fetchCollection('categories', toCategory),
+    fetchCollection('subcategories', toSubcategory),
+    fetchCollection('lessons', toLesson),
+  ]);
+  const now = Date.now();
+  const published = lessons.filter((l) => isPublished(l, now));
+
+  const canonical = SITE + '/';
+  const title = BRAND + ' | استمع لمئات الدروس الصوتية العلمية مباشرة';
+  const description =
+    'أرشيف صوتي لمشايخ ادكصهك: ' + published.length + ' درساً علمياً في ' +
+    categories.length + ' فنّاً، تستمع إليها مباشرة من المتصفّح بلا حساب وبلا إعلانات.';
+
+  // ترتيب الأحدث أولاً، ونعرض عيّنة كافية لتفتح للزاحف طرقاً إلى المكتبة.
+  const newest = published
+    .slice()
+    .sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0))
+    .slice(0, 60);
+
+  let html = '<div class="wrap"><article class="ssr-intro">';
+  html += '<h1>' + escapeHtml(BRAND) + ' — أرشيف مشايخكم الصوتي</h1>';
+  html += '<p>' + escapeHtml(
+    'منصّة تحفظ إرث مشايخ ادكصهك وتوفّر لهم منبراً لنشر صوتياتهم: مئات ' +
+    'الصوتيات العلمية التي تشرح كتباً مختلفة، وتسجيلات نادرة، محدّثة باستمرار. ' +
+    'استمع مباشرة من المتصفّح، أو نزّل التطبيق للاستماع دون إنترنت.',
+  ) + '</p>';
+  html += '<p>' + escapeHtml(
+    published.length + ' درساً منشوراً · ' + categories.length + ' فنّاً · ' +
+    subcategories.length + ' قسماً فرعياً',
+  ) + '</p>';
+
+  // الأقسام: روابط حقيقية يزحف عليها المفهرس.
+  html += '<h2>الفنون العلمية</h2><ul>';
+  for (const c of categories) {
+    const count = published.filter((l) => l.categoryId === c.id).length;
+    html += '<li><a href="/category/' + encodeURIComponent(c.id) + '">' +
+      escapeHtml(c.name) + '</a> — ' + count + ' درساً</li>';
+  }
+  html += '</ul>';
+
+  html += '<h2>أحدث الدروس</h2><ul>';
+  for (const l of newest) {
+    html += '<li><a href="/lesson/' + encodeURIComponent(l.id) + '">' +
+      escapeHtml(l.title || 'درس صوتي') + '</a>' +
+      (l.speaker ? ' — ' + escapeHtml(l.speaker) : '') + '</li>';
+  }
+  html += '</ul>';
+  html += '<p><a href="' + PLAY_URL + '">حمّل تطبيق ' + escapeHtml(BRAND) +
+    ' على أندرويد</a></p>';
+  html += '</article></div>';
+
+  const ld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': SITE + '/#website',
+        name: BRAND,
+        alternateName: ['منبر ادكصهك الصوتي', 'Minbar Adkshk'],
+        url: SITE + '/',
+        inLanguage: 'ar',
+        description: description,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: SITE + '/#/search/{search_term_string}',
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': SITE + '/#org',
+        name: BRAND,
+        url: SITE + '/',
+        sameAs: [
+          'https://github.com/mwqwf',
+          'https://youtube.com/@mtfail',
+          PLAY_URL,
+        ],
+      },
+      {
+        '@type': 'MobileApplication',
+        name: BRAND,
+        operatingSystem: 'Android',
+        applicationCategory: 'MultimediaApplication',
+        url: PLAY_URL,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      },
+    ],
+  };
+
+  return shell({
+    title: title,
+    description: description,
+    canonical: canonical,
+    jsonLd: JSON.stringify(ld),
+    bodyIntro: html,
+  });
+}
+
+/* ---------- صفحة درس ---------- */
 async function renderLesson(id) {
   const raw = await fetchDoc('lessons', id);
   if (!raw) return null;
@@ -121,7 +166,7 @@ async function renderLesson(id) {
     '@context': 'https://schema.org',
     '@type': 'AudioObject',
     name: lesson.title || 'درس صوتي',
-    description,
+    description: description,
     url: canonical,
     inLanguage: 'ar',
     isAccessibleForFree: true,
@@ -133,6 +178,14 @@ async function renderLesson(id) {
   if (lesson.durationMs) ld.duration = isoDuration(lesson.durationMs);
   if (lesson.createdAtMs) ld.uploadDate = new Date(lesson.createdAtMs).toISOString();
 
+  const links = [{ href: '/', label: 'تصفّح مكتبة ' + BRAND + ' كاملة' }];
+  if (lesson.subcategoryId) {
+    links.unshift({
+      href: '/section/' + encodeURIComponent(lesson.subcategoryId),
+      label: 'بقيّة دروس هذا القسم',
+    });
+  }
+
   const intro = introBlock(
     lesson.title || 'درس صوتي',
     [
@@ -141,18 +194,17 @@ async function renderLesson(id) {
       lesson.description || '',
       'جارٍ تجهيز المشغّل…',
     ],
-    [{ href: '/', label: 'تصفّح مكتبة ' + BRAND + ' كاملة' }],
+    links,
   );
 
   return shell({
-    title, description, canonical,
-    jsonLd: JSON.stringify(ld),
-    bodyIntro: intro,
+    title: title, description: description, canonical: canonical,
+    jsonLd: JSON.stringify(ld), bodyIntro: intro,
   });
 }
 
+/* ---------- قسم رئيسي أو فرعي ---------- */
 async function renderGroup(kind, id) {
-  // kind: 'category' (قسم رئيسي) أو 'section' (قسم فرعي)
   const collection = kind === 'category' ? 'categories' : 'subcategories';
   const raw = await fetchDoc(collection, id);
   if (!raw) return null;
@@ -166,26 +218,42 @@ async function renderGroup(kind, id) {
     'كل دروس «' + name + '» الصوتية في ' + BRAND +
     ': استمع إليها مباشرة من المتصفّح أو نزّلها عبر التطبيق، محدَّثة باستمرار.';
 
+  // روابط دروس القسم: الطريق الذي يمشي عليه الزاحف من القسم إلى دروسه.
+  const lessons = await fetchCollection('lessons', toLesson);
+  const now = Date.now();
+  const mine = lessons.filter((l) =>
+    isPublished(l, now) &&
+    (kind === 'category' ? l.categoryId === id : l.subcategoryId === id));
+
+  let html = '<div class="wrap"><article class="ssr-intro">';
+  html += '<h1>' + escapeHtml(name) + '</h1>';
+  html += '<p>' + escapeHtml(description) + '</p>';
+  html += '<p>' + mine.length + ' درساً في هذا القسم.</p>';
+  if (mine.length) {
+    html += '<ul>';
+    for (const l of mine.slice(0, 200)) {
+      html += '<li><a href="/lesson/' + encodeURIComponent(l.id) + '">' +
+        escapeHtml(l.title || 'درس صوتي') + '</a>' +
+        (l.speaker ? ' — ' + escapeHtml(l.speaker) : '') + '</li>';
+    }
+    html += '</ul>';
+  }
+  html += '<p><a href="/">العودة إلى المكتبة</a></p>';
+  html += '</article></div>';
+
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name,
-    description,
+    name: name,
+    description: description,
     url: canonical,
     inLanguage: 'ar',
     isPartOf: { '@type': 'WebSite', name: BRAND, url: SITE },
   };
 
-  const intro = introBlock(
-    name,
-    [description, 'جارٍ تحميل دروس هذا القسم…'],
-    [{ href: '/', label: 'العودة إلى المكتبة' }],
-  );
-
   return shell({
-    title, description, canonical,
-    jsonLd: JSON.stringify(ld),
-    bodyIntro: intro,
+    title: title, description: description, canonical: canonical,
+    jsonLd: JSON.stringify(ld), bodyIntro: html,
   });
 }
 
@@ -193,26 +261,28 @@ function fallback(canonical) {
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: BRAND,
-    url: SITE,
-    inLanguage: 'ar',
+    name: BRAND, url: SITE, inLanguage: 'ar',
   };
   return shell({
     title: BRAND + ' | استمع للدروس العلمية مباشرة',
     description: DEFAULT_DESC,
     canonical: canonical || SITE + '/',
     jsonLd: JSON.stringify(ld),
-    bodyIntro: introBlock(BRAND, [DEFAULT_DESC, 'جارٍ تحميل المكتبة…'], []),
+    bodyIntro: introBlock(BRAND, [DEFAULT_DESC, 'جارٍ تحميل المكتبة…'],
+      [{ href: '/', label: 'المكتبة' }]),
   });
 }
 
 module.exports = async (req, res) => {
   const path = String(req.url || '').split('?')[0];
   const m = path.match(/^\/(lesson|category|section)\/([^/]+)\/?$/);
+  const isHome = path === '/' || path === '';
 
   try {
     let html = null;
-    if (m) {
+    if (isHome) {
+      html = await renderHome();
+    } else if (m) {
       const id = decodeURIComponent(m[2]);
       html = m[1] === 'lesson' ? await renderLesson(id) : await renderGroup(m[1], id);
     }

@@ -17,6 +17,6 @@
     { "src": "^/lesson/[^/]+/?$", "dest": "/api/render.js" },
     { "src": "^/category/[^/]+/?$", "dest": "/api/render.js" },
     { "src": "^/section/[^/]+/?$", "dest": "/api/render.js" },
-    { "src": "^/$", "dest": "/index.html" }
+    { "src": "^/$", "dest": "/api/render.js" }
   ]
 }
