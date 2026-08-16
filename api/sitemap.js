@@ -25,6 +25,16 @@ function urlEntry(loc, lastmod, changefreq, priority) {
   );
 }
 
+/* صفحات المصحف: ثابتة لا تعتمد على Firestore، فتدخل الخريطة في كل الأحوال
+   (حتى لو تعذّر جلب الكتالوج). 114 سورة + صفحة الفهرس. */
+function quranEntries() {
+  let xml = urlEntry(SITE + '/quran', '', 'monthly', '0.9');
+  for (let n = 1; n <= 114; n++) {
+    xml += urlEntry(SITE + '/quran/' + n, '', 'yearly', '0.7');
+  }
+  return xml;
+}
+
 module.exports = async (req, res) => {
   try {
     const [categories, subcategories, lessons] = await Promise.all([
@@ -43,6 +53,7 @@ module.exports = async (req, res) => {
 
     xml += urlEntry(SITE + '/', iso(newest), 'daily', '1.0');
     xml += urlEntry(SITE + '/privacy', '', 'yearly', '0.3');
+    xml += quranEntries();
 
     // صفحات الأقسام والأقسام الفرعية (مسارات قابلة للزحف).
     for (const c of categories) {
@@ -75,6 +86,7 @@ module.exports = async (req, res) => {
       '<?xml version="1.0" encoding="UTF-8"?>\n' +
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
       urlEntry(SITE + '/', '', 'daily', '1.0') +
+      quranEntries() +
       '</urlset>\n',
     );
   }

@@ -17,6 +17,10 @@ const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.ali.menbarad
 /**
  * @param o.title/description/canonical/jsonLd  وسوم الرأس
  * @param o.bodyIntro  محتوى `#app` الذي يراه الزاحف قبل أن يستبدله app.js
+ * @param o.extraCss   ورقة أنماط إضافية (صفحة المصحف)
+ * @param o.script     ملف JS للصفحة (الافتراضي app.js؛ المصحف له ملفه لأن
+ *                     موجّه app.js يمسح `#app` على أي مسار لا يعرفه)
+ * @param o.noPlayer   إخفاء شريط مشغّل الدروس (صفحة المصحف لها مشغّلها)
  */
 function shell(o) {
   return `<!DOCTYPE html>
@@ -41,6 +45,7 @@ function shell(o) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/app.css"/>
+${o.extraCss ? `<link rel="stylesheet" href="${escapeHtml(o.extraCss)}"/>` : ''}
 <script type="application/ld+json">${o.jsonLd}</script>
 <script>
 /* تطبيق السمة قبل أول رسم لتفادي وميض السمة الخاطئة */
@@ -59,6 +64,7 @@ document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
       <a href="/#/" data-route="home">المكتبة</a>
       <a href="/#/search" data-route="search">بحث</a>
       <a href="/#/mylists" data-route="mylists">قوائمي</a>
+      <a href="/quran" data-route="quran">المصحف</a>
     </nav>
     <span class="spacer"></span>
     <button class="iconbtn" id="themeBtn" title="السمة الفاتحة/الداكنة" aria-label="تبديل السمة">🌙</button>
@@ -74,6 +80,7 @@ ${o.bodyIntro}
 <!-- إشعار «يتم التحديث في الخلفية» -->
 <div class="sync-note" id="syncNote">يتم تحديث المكتبة…</div>
 
+${o.noPlayer ? '' : `
 <!-- شريط المشغّل السفلي الدائم -->
 <div id="player" dir="rtl">
   <div class="player-inner">
@@ -94,6 +101,7 @@ ${o.bodyIntro}
     </div>
   </div>
 </div>
+`}
 
 <!-- التذييل -->
 <footer class="site">
@@ -121,7 +129,7 @@ ${o.bodyIntro}
   </div>
 </footer>
 
-<script src="/assets/app.js"></script>
+<script src="${escapeHtml(o.script || '/assets/app.js')}"></script>
 </body>
 </html>
 `;

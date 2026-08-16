@@ -1,0 +1,99 @@
+/* ============================================================
+   أنماط صفحة المصحف — منبر ادكصهك
+   ⚠️ لا تُنقل إلى assets/app.css: مسار ‎/assets/*‎ في vercel.json يُحوَّل إلى
+   jsDelivr على إيداع مثبَّت، فأي ملف جديد هناك لن يُخدَم. تبقى هنا.
+   تستعمل متغيّرات الهوية نفسها المعرّفة في app.css (لا ألوان جديدة).
+   ============================================================ */
+
+.q-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 6px}
+.q-head h1{font-family:Amiri,serif;font-size:clamp(20px,3.2vw,28px);color:var(--accent);line-height:1.5}
+.q-head .count{font-size:12.5px;color:var(--muted);background:var(--chip-bg);border-radius:999px;padding:2px 12px;font-weight:700}
+.q-head .back{
+  text-decoration:none;background:var(--surface-2);border:1px solid var(--border);
+  color:var(--ink);width:36px;height:36px;border-radius:12px;flex:none;
+  display:inline-flex;align-items:center;justify-content:center;font-size:16px;
+}
+
+/* شريط الأدوات (الرواية/القارئ/الخطّ) */
+.q-bar{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:10px 12px;box-shadow:var(--shadow);margin:12px 0;
+}
+.q-bar label{font-size:12.5px;color:var(--muted);font-weight:700}
+.q-bar select{
+  font-family:inherit;font-size:13.5px;padding:7px 10px;border-radius:12px;
+  background:var(--surface-2);color:var(--ink);border:1px solid var(--border);max-width:100%;
+}
+.q-bar .grow{margin-inline-start:auto}
+.q-bar .fbtn{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--ink);
+  width:34px;height:34px;border-radius:10px;font-size:15px;font-weight:800;
+}
+.q-note{font-size:12px;color:var(--muted);margin:2px 0 10px}
+
+/* «تابع القراءة» */
+.q-resume{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;text-decoration:none;
+  background:var(--surface);border:1px solid var(--border);border-inline-start:4px solid var(--gold);
+  border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);margin:14px 0;color:var(--ink);
+}
+/* لولاه لظهرت بطاقة «تابع القراءة» فارغة: display:flex يتغلّب على hidden */
+[hidden]{display:none !important}
+.q-resume b{color:var(--accent)}
+.q-resume small{color:var(--muted)}
+
+/* الفهرس */
+.q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.q-grid.small{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
+.q-card{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;padding:10px 12px;
+  box-shadow:var(--shadow);text-decoration:none;color:var(--ink);
+}
+.q-card:hover{border-color:var(--accent)}
+.q-card .num{
+  width:34px;height:34px;border-radius:10px;flex:none;background:var(--chip-bg);
+  color:var(--chip-ink);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;
+}
+.q-card .nm{font-family:Amiri,serif;font-size:17px;font-weight:700;line-height:1.4}
+.q-card .mt{font-size:11.5px;color:var(--muted)}
+
+/* المصحف */
+.q-basmala{
+  font-family:Amiri,serif;text-align:center;color:var(--accent);
+  font-size:calc(var(--qfs,22px) * 1.05);margin:18px 0 6px;
+}
+.q-text{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  box-shadow:var(--shadow);padding:20px 18px;margin-bottom:24px;
+  font-family:Amiri,serif;font-size:var(--qfs,22px);line-height:2.35;
+  text-align:justify;text-align-last:center;
+}
+.q-ayah{cursor:pointer;border-radius:8px;padding:2px 2px;transition:background .15s}
+.q-ayah:hover{background:var(--surface-2)}
+.q-ayah.on{background:color-mix(in srgb, var(--gold) 18%, var(--surface));box-shadow:0 0 0 2px var(--gold)}
+.q-mark{font-family:Amiri,serif;color:var(--gold);font-size:.9em;white-space:nowrap}
+
+/* أدوات الآية المختارة */
+.q-tools{display:flex;gap:8px;flex-wrap:wrap;margin:-10px 0 22px}
+.q-tools button{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--ink);
+  border-radius:12px;padding:7px 14px;font-size:13px;font-weight:700;
+}
+.q-tools button:hover{border-color:var(--accent)}
+
+/* تنقّل بين السور */
+.q-nav{display:flex;gap:10px;justify-content:space-between;margin:0 0 30px}
+.q-nav a{
+  background:var(--surface-2);border:1px solid var(--border);color:var(--ink);
+  border-radius:14px;padding:9px 16px;text-decoration:none;font-weight:700;font-size:13.5px;
+}
+.q-toast{
+  position:fixed;bottom:130px;inset-inline-end:14px;z-index:90;
+  background:var(--surface);border:1px solid var(--border);color:var(--ink);
+  border-radius:999px;padding:6px 16px;font-size:12.5px;box-shadow:var(--shadow);
+  opacity:0;transition:opacity .25s;pointer-events:none;
+}
+.q-toast.show{opacity:1}
