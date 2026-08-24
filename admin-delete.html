@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>حذف الحساب والبيانات — لوحة إدارة منبر ادكصهك</title>
+<meta name="description" content="خطوات حذف حساب المشرف وبياناته في تطبيق «إدارة منبر ادكصهك»."/>
+<meta name="robots" content="index,follow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--teal:#247172;--teal-dark:#184b4b;--navy:#020e1d;--bg:#f8fcfc;--gold:#d4af37;--ink:#12242e;--muted:#5b7480;--red:#9a2b2b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Cairo,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);line-height:2}
+  .wrap{max-width:840px;margin:0 auto;padding:0 20px}
+  header{position:sticky;top:0;z-index:50;background:rgba(248,252,252,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e2efef}
+  .nav{display:flex;align-items:center;gap:22px;padding:14px 0}
+  .brand{font-family:Amiri,serif;font-weight:700;font-size:22px;color:var(--teal-dark);text-decoration:none}
+  .nav a.link{color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:600}
+  .nav a.link:hover{color:var(--teal)}
+  .navlinks{display:flex;gap:22px}
+  @media(max-width:700px){.navlinks{display:none}}
+  .head{background:linear-gradient(160deg,var(--navy),var(--teal-dark));color:#fff;text-align:center;padding:46px 20px}
+  .head .chip{display:inline-block;background:rgba(212,175,55,.15);color:var(--gold);border:1px solid rgba(212,175,55,.4);padding:4px 16px;border-radius:999px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+  .head h1{font-family:Amiri,serif;font-size:clamp(22px,4vw,32px)}
+  .head .date{color:#c6dade;font-size:13.5px;margin-top:6px}
+  main{padding:40px 0 60px}
+  main p, main li{font-size:15px;color:#2b3f4a}
+  h2{font-family:Amiri,serif;color:var(--teal-dark);font-size:21px;margin:30px 0 8px;border-inline-start:4px solid var(--gold);padding-inline-start:12px}
+  ul,ol{padding-inline-start:22px;margin:6px 0}
+  li{margin:5px 0}
+  .lead{background:#fff;border:1px solid #e2efef;border-radius:18px;padding:20px 22px;margin-bottom:8px}
+  .steps{background:#fff;border:1px solid #e2efef;border-radius:18px;padding:20px 22px;margin:14px 0}
+  .steps ol{counter-reset:s;list-style:none;padding-inline-start:0}
+  .steps ol li{counter-increment:s;position:relative;padding-inline-start:44px;margin:14px 0}
+  .steps ol li::before{content:counter(s);position:absolute;inset-inline-start:0;top:6px;width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;line-height:1}
+  .mail{display:inline-block;background:var(--teal);color:#fff;padding:12px 26px;border-radius:14px;text-decoration:none;font-weight:700;margin:8px 0}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14.5px;display:block;overflow-x:auto}
+  th,td{border:1px solid #e2efef;padding:9px 12px;text-align:start;vertical-align:top}
+  th{background:#eef6f6;color:var(--teal-dark);font-weight:700}
+  .callout{background:#fff;border:1px solid #e2efef;border-inline-start:4px solid var(--red);border-radius:14px;padding:16px 18px;margin:16px 0}
+  a{color:var(--teal)}
+  footer{background:var(--navy);color:#9db8bd;padding:26px 0;font-size:14px;text-align:center}
+  footer a{color:#c6dade;text-decoration:none;margin:0 8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/">منبر ادكصهك</a>
+    <nav class="navlinks">
+      <a class="link" href="/privacy">خصوصية التطبيق</a>
+      <a class="link" href="/admin-privacy">خصوصية لوحة الإدارة</a>
+      <a class="link" href="/admin-delete">حذف الحساب والبيانات</a>
+    </nav>
+  </div>
+</header>
+<div class="head">
+  <span class="chip">حذف الحساب والبيانات</span>
+  <h1>حذف حسابك وبياناتك — «إدارة منبر ادكصهك»</h1>
+  <div class="date">آخر تحديث: 24 أغسطس 2026</div>
+</div>
+<main class="wrap">
+  <div class="lead">
+    <p>تخصّ هذه الصفحة تطبيق <strong>«إدارة منبر ادكصهك»</strong> (معرّف الحزمة <code>com.ali.ishaqiyin_admin</code>) — لوحة المشرفين المعتمَدين.</p>
+    <p>تستطيع في أي وقت أن تطلب <strong>حذف حسابك</strong> أو <strong>حذف بياناتك</strong> دون حذف الحساب. والطلبان مجّانيّان ولا يحتاجان سبباً.</p>
+  </div>
+
+  <h2>كيف تطلب الحذف</h2>
+  <div class="steps">
+    <ol>
+      <li>أرسل رسالة بريد إلكتروني من <strong>البريد نفسه الذي تدخل به إلى اللوحة</strong> — فهذا هو ما يُثبت أنّ الحساب لك.</li>
+      <li>اجعل عنوان الرسالة: <strong>«حذف حساب لوحة الإدارة»</strong> أو <strong>«حذف بياناتي»</strong> بحسب ما تريد.</li>
+      <li>أرسلها إلى العنوان أدناه. لا يلزمك شيء آخر ولا نطلب منك أي كلمة مرور.</li>
+      <li>سيصلك ردّ تأكيد، ويُنفَّذ الطلب <strong>خلال ثلاثين يوماً</strong> على أبعد تقدير، وغالباً خلال أيّام.</li>
+    </ol>
+    <p style="text-align:center">
+      <a class="mail" href="mailto:cloudenarymarwano@gmail.com?subject=%D8%AD%D8%B0%D9%81%20%D8%AD%D8%B3%D8%A7%D8%A8%20%D9%84%D9%88%D8%AD%D8%A9%20%D8%A7%D9%84%D8%A5%D8%AF%D8%A7%D8%B1%D8%A9">أرسل طلب الحذف الآن</a>
+    </p>
+    <p style="text-align:center;font-size:14px;color:#5b7480">cloudenarymarwano@gmail.com</p>
+  </div>
+
+  <h2>ما الذي يُحذف</h2>
+  <table>
+    <tr><th>البيانات</th><th>عند حذف الحساب</th><th>المدّة</th></tr>
+    <tr><td>اسمك وبريدك وصورتك</td><td>تُحذف نهائيّاً</td><td>فوراً عند التنفيذ</td></tr>
+    <tr><td>اعتمادك كمشرف</td><td>يُلغى فيسقط دخولك</td><td>فوراً</td></tr>
+    <tr><td>رمز جهازك للإشعارات</td><td>يُحذف فتتوقّف الإشعارات</td><td>فوراً</td></tr>
+    <tr><td>رسائلك في محادثة المشرفين</td><td>تُحذف</td><td>فوراً</td></tr>
+    <tr><td>رسائلك الصوتيّة وصورك في المحادثة</td><td>تُحذف من التخزين</td><td>فوراً</td></tr>
+    <tr><td>سجلّ «مَن عدّل ماذا» المرتبط ببريدك</td><td>يُجرَّد من هويّتك</td><td>فوراً</td></tr>
+    <tr><td>النسخ الاحتياطيّة</td><td>تُمحى مع الدورة التالية</td><td>حتى 30 يوماً</td></tr>
+  </table>
+
+  <div class="callout">
+    <p><strong>ما لا يُحذف ولماذا:</strong> الدروس الصوتيّة والأقسام والنصوص المشروحة التي نشرتَها تبقى، لأنّها <strong>محتوى المشروع الخيريّ العامّ</strong> يستمع إليه الناس، وليست بياناتك الشخصيّة. وإن أردتَ حذف درسٍ بعينه نشرتَه فاطلب ذلك صراحةً في الرسالة نفسها مع اسم الدرس.</p>
+  </div>
+
+  <h2>حذف البيانات دون حذف الحساب</h2>
+  <p>إن أردتَ الإبقاء على حسابك مشرفاً مع حذف بياناتك الشخصيّة (رسائل المحادثة ووسائطها وصورتك)، فاكتب في الرسالة <strong>«حذف بياناتي مع الإبقاء على الحساب»</strong>، ويُنفَّذ بالمدّة نفسها.</p>
+
+  <h2>هل تريد إيقاف الإشعارات فقط؟</h2>
+  <p>لا يلزم حذف شيء: تستطيع إيقاف إشعارات التطبيق من إعدادات هاتفك مباشرةً، أو تسجيل الخروج من اللوحة فيُحذف رمز جهازك تلقائيّاً.</p>
+
+  <h2>سياسة الخصوصيّة</h2>
+  <p>تفاصيل ما يُجمَع ولماذا وأين يُخزَّن: <a href="/admin-privacy">سياسة الخصوصية — لوحة إدارة منبر ادكصهك</a>.</p>
+</main>
+<footer>
+  <div class="wrap">
+    <a href="/">الرئيسية</a>
+    <a href="/privacy">خصوصية التطبيق</a>
+    <a href="/admin-privacy">خصوصية لوحة الإدارة</a>
+    <a href="/admin-delete">حذف الحساب والبيانات</a>
+    <p style="margin-top:10px">منبر ادكصهك — مشروع خيريّ وقفٌ لله تعالى</p>
+  </div>
+</footer>
+</body>
+</html>
