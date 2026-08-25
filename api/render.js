@@ -17,19 +17,20 @@ const {
   SITE, fetchDoc, fetchCollection, toCategory, toSubcategory, toLesson,
   unwrap, text, escapeHtml, isoDuration, isPublished,
 } = require('./_lib');
-const { shell, BRAND, PLAY_URL } = require('./_shell');
+const { shell, BRAND, PLAY_URL, inviteBar } = require('./_shell');
 
 const DEFAULT_DESC =
   'منصّة تحفظ إرث مشايخ ادكصهك: مئات الدروس الصوتية العلمية مصنّفة بحسب ' +
   'العلوم، تستمع إليها مباشرة من المتصفّح.';
 
 /* المحتوى الذي يراه الزاحف داخل #app قبل أن يستبدله app.js. */
-function introBlock(heading, paragraphs, links) {
+function introBlock(heading, paragraphs, links, banner) {
   let html = '<div class="wrap"><article class="ssr-intro">';
   html += '<h1>' + escapeHtml(heading) + '</h1>';
   for (const p of paragraphs) {
     if (p) html += '<p>' + escapeHtml(p) + '</p>';
   }
+  if (banner) html += banner;
   if (links && links.length) {
     html += '<ul>';
     for (const l of links) {
@@ -195,6 +196,7 @@ async function renderLesson(id) {
       'جارٍ تجهيز المشغّل…',
     ],
     links,
+    inviteBar(),
   );
 
   return shell({

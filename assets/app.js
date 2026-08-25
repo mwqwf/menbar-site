@@ -571,10 +571,16 @@
     return '<div class="state-box"><div class="big">' + (icon || '🗂️') + '</div><h3>' + esc(msg) + '</h3></div>';
   }
 
-  function appBannerHtml() {
+  /**
+   * شريط الدعوة إلى التطبيق. `msg` يغيّر النصّ فقط لا الشكل.
+   * صفحة الدرس تمرّر دعوة «بقيّة السلسلة» لأن أكثر زوّارها جاؤوا من رابط
+   * شاركه أحدهم من التطبيق، فهم في أنسب لحظة للدعوة. والشريط **واحد**:
+   * `api/_shell.js` يرسم مثيله قبل وصول الـJS ثم يستبدله هذا.
+   */
+  function appBannerHtml(msg) {
     return (
       '<div class="app-banner">' +
-        '<p>للتنزيل دون إنترنت، ومؤقّت النوم، والودجت، وكل المزايا — حمّل تطبيق منبر ادكصهك المجاني.</p>' +
+        '<p>' + esc(msg || 'للتنزيل دون إنترنت، ومؤقّت النوم، والودجت، وكل المزايا — حمّل تطبيق منبر ادكصهك المجاني.') + '</p>' +
         '<a href="' + PLAY_URL + '" target="_blank" rel="noopener">حمّل التطبيق</a>' +
       '</div>'
     );
@@ -792,7 +798,7 @@
           '<button class="btn btn-ghost" id="favHero">' + (fav ? '★ في المفضّلة' : '☆ أضِف للمفضّلة') + '</button>' +
         '</div>' +
       '</div>' +
-      appBannerHtml() +
+      appBannerHtml('استمع لبقيّة السلسلة في تطبيق منبر ادكصهك') +
       (sub ? '<section class="block"><div class="sec-title"><h2>من نفس القسم</h2>' +
         '<a class="more" href="#/sub/' + encodeURIComponent(sub.id) + '">عرض الكل ←</a></div>' +
         lessonListHtml(lessonsForSubcategory(sub.id).filter((l) => l.id !== lesson.id).slice(0, 8)) + '</section>' : '') +
