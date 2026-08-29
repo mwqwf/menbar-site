@@ -95,14 +95,25 @@ async function fetchDoc(collectionId, id) {
   return decodeFields(doc.fields);
 }
 
+/* `createdAt` رقمياً باسمه الأصلي أيضاً + `updatedAtMs`: تطبيق أندرويد صار
+   يستهلك هذا الكتالوج كقناة جلبٍ كامل (طلب واحد بدل مئات قراءات Firestore)
+   ويبني منه علامات مزامنته التفاضلية — أسماء الحقول عقدٌ معه فلا تُغيَّر. */
 const toCategory = (id, raw) => {
   const d = unwrap(raw);
-  return { id, name: text(d.name), createdAtMs: timeMillis(d.createdAt) };
+  return {
+    id, name: text(d.name),
+    createdAtMs: timeMillis(d.createdAt), createdAt: timeMillis(d.createdAt),
+    updatedAtMs: timeMillis(d.updatedAt),
+  };
 };
 
 const toSubcategory = (id, raw) => {
   const d = unwrap(raw);
-  return { id, name: text(d.name), categoryId: text(d.categoryId), createdAtMs: timeMillis(d.createdAt) };
+  return {
+    id, name: text(d.name), categoryId: text(d.categoryId),
+    createdAtMs: timeMillis(d.createdAt), createdAt: timeMillis(d.createdAt),
+    updatedAtMs: timeMillis(d.updatedAt),
+  };
 };
 
 const toLesson = (id, raw) => {
@@ -120,8 +131,16 @@ const toLesson = (id, raw) => {
     views: num(d.views),
     speaker: text(d.speaker) || text(d.sheikh) || text(d.reader) || text(d.sheikhName),
     description: text(d.description),
-    durationMs: num(d.durationMs) || num(d.duration),
+    durationMs: num(d.durationMs) || num(d.duration) || (num(d.durationSeconds) * 1000),
     publishAtMs: publishAt > 0 ? publishAt : null,
+    createdAt: timeMillis(d.createdAt),
+    updatedAtMs: timeMillis(d.updatedAt),
+    featured: d.featured === true,
+    featuredUntil: d.featuredUntil != null ? timeMillis(d.featuredUntil) : 0,
+    // هوية المحتوى (معمارية «المكتبة الكاملة»): بصمة البايتات المُقدَّمة وحجمها.
+    sha256: text(d.sha256),
+    sizeBytes: num(d.sizeBytes),
+    durationSeconds: num(d.durationSeconds),
   };
 };
 
