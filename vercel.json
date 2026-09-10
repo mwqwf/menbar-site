@@ -23,6 +23,10 @@
       "dest": "/api/audio.js"
     },
     {
+      "src": "^/v1/(.*)$",
+      "dest": "/api/proxy.js"
+    },
+    {
       "src": "^/sitemap\\.xml$",
       "dest": "/api/sitemap.js"
     },

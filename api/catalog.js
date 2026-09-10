@@ -48,6 +48,7 @@ module.exports = async (req, res) => {
       license: 'خيري وقف لله — النسبة إلزامية لـ github.com/mwqwf والاستخدام التجاري ممنوع دون إذن كتابي. انظر LICENSE.',
       docs: 'https://github.com/mwqwf/menbar-site/blob/main/API.md',
       generatedAt: new Date().toISOString(),
+      source: 'minbar-api',
       counts: {
         categories: categories.length,
         subcategories: subcategories.length,
