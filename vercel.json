@@ -1,28 +1,85 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node", "config": { "includeFiles": "quran/**" } },
-    { "src": "**", "use": "@vercel/static" }
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "quran/**"
+      }
+    },
+    {
+      "src": "**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "^/api/catalog/?$", "dest": "/api/catalog.js" },
-    { "src": "^/sitemap\\.xml$", "dest": "/api/sitemap.js" },
+    {
+      "src": "^/api/catalog/?$",
+      "dest": "/api/catalog.js"
+    },
+    {
+      "src": "^/audio/([0-9a-f]{64})\\.ogg$",
+      "dest": "/api/audio.js"
+    },
+    {
+      "src": "^/sitemap\\.xml$",
+      "dest": "/api/sitemap.js"
+    },
     {
       "src": "^/assets/(.*)$",
       "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@9f57e08cf9f4f8f0c16f7c0be14a4e864e435627/assets/$1"
     },
-    { "src": "^/robots\\.txt$", "dest": "/robots.txt" },
-    { "handle": "filesystem" },
-    { "src": "^/privacy/?$", "dest": "/privacy.html" },
-    { "src": "^/admin-privacy/?$", "dest": "/admin-privacy.html" },
-    { "src": "^/admin-delete/?$", "dest": "/admin-delete.html" },
-    { "src": "^/delete-account/?$", "dest": "/admin-delete.html" },
-    { "src": "^/data-deletion/?$", "dest": "/admin-delete.html" },
-    { "src": "^/quran/?$", "dest": "/api/quran.js" },
-    { "src": "^/quran/[0-9]{1,3}/?$", "dest": "/api/quran.js" },
-    { "src": "^/lesson/[^/]+/?$", "dest": "/api/render.js" },
-    { "src": "^/category/[^/]+/?$", "dest": "/api/render.js" },
-    { "src": "^/section/[^/]+/?$", "dest": "/api/render.js" },
-    { "src": "^/$", "dest": "/api/render.js" }
+    {
+      "src": "^/robots\\.txt$",
+      "dest": "/robots.txt"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/privacy/?$",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "^/admin-privacy/?$",
+      "dest": "/admin-privacy.html"
+    },
+    {
+      "src": "^/admin-delete/?$",
+      "dest": "/admin-delete.html"
+    },
+    {
+      "src": "^/delete-account/?$",
+      "dest": "/admin-delete.html"
+    },
+    {
+      "src": "^/data-deletion/?$",
+      "dest": "/admin-delete.html"
+    },
+    {
+      "src": "^/quran/?$",
+      "dest": "/api/quran.js"
+    },
+    {
+      "src": "^/quran/[0-9]{1,3}/?$",
+      "dest": "/api/quran.js"
+    },
+    {
+      "src": "^/lesson/[^/]+/?$",
+      "dest": "/api/render.js"
+    },
+    {
+      "src": "^/category/[^/]+/?$",
+      "dest": "/api/render.js"
+    },
+    {
+      "src": "^/section/[^/]+/?$",
+      "dest": "/api/render.js"
+    },
+    {
+      "src": "^/$",
+      "dest": "/api/render.js"
+    }
   ]
 }

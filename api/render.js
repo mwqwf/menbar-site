@@ -120,7 +120,7 @@ async function renderHome() {
         url: SITE + '/',
         sameAs: [
           'https://github.com/mwqwf',
-          'https://youtube.com/@mtfail',
+          'https://youtube.com/@Al-Mutafail',
           PLAY_URL,
         ],
       },

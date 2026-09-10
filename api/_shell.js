@@ -118,7 +118,7 @@ ${o.noPlayer ? '' : `
       — مشروع مفتوح للمهتمّين بادكصهك وما يهمّهم: النسبة لمطوّره الأصلي
       إلزامية، والاستخدام التجاري ممنوع دون إذن كتابي صريح من
       <a href="https://github.com/mwqwf" target="_blank" rel="noopener">mwqwf</a>.
-      <a href="https://youtube.com/@mtfail" target="_blank" rel="noopener">قناتنا على يوتيوب</a>
+      <a href="https://youtube.com/@Al-Mutafail" target="_blank" rel="noopener">قناتنا على يوتيوب</a>
       فيها فيديوهات توضيحية عن الجديد وكيفية الاستعمال.
       <br/>🕌 هذا المشروع خيريٌّ ووقفٌ لله تعالى: لا نتربّح منه ولن نتربّح، ولا
       نسمح لأحد بالتربّح منه — وهو مفتوح لكل من يريد خدمة تراث هذه القبيلة.
