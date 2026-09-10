@@ -1,10 +1,45 @@
 /* ============================================================
-   مكتبة مشتركة لدوال منبر الخادمية: جلب الكتالوج من Firestore REST.
+   مكتبة مشتركة لدوال منبر الخادمية: جلب الكتالوج.
    تُستعمل في /api/catalog و/api/sitemap و/api/lesson فلا يتكرّر الكود.
-   لا أسرار هنا: مفتاح الويب علني بحكم تصميم Firebase، وقواعد Firestore
-   لا تسمح إلا بالقراءة العامة لهذه المجموعات.
+
+   ⭐ 2026-09-10: المصدر الأول صار **minbar-api** (Cloudflare Workers + D1)
+   بعد عطل فوترة Firebase؛ وهو يعيد الكتالوج بالشكل النهائي نفسه (العقد
+   مع تطبيق أندرويد). الترتيب: minbar-api → اللقطة الاحتياطية على jsDelivr
+   → Firestore REST (يبقى أخيراً حتى يُطفأ المشروع نهائياً).
+   لا أسرار هنا: مفتاح الويب علني بحكم تصميم Firebase.
    ============================================================ */
 'use strict';
+const MINBAR_API = process.env.MINBAR_API || 'https://minbar-api.mushafak.workers.dev';
+const FALLBACK_URL = 'https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@main/api/catalog-fallback.json';
+const UA = { 'User-Agent': 'menbar-site' };
+
+/* كتالوج minbar-api كاملاً مع كاش ذاكرة قصير — الدالة الخادمية قد تخدم
+   عدة طلبات في عمر واحد فلا نعيد الجلب لكلّ واحد. */
+let apiCache = { at: 0, data: null };
+async function apiCatalog() {
+  if (apiCache.data && Date.now() - apiCache.at < 60000) return apiCache.data;
+  const res = await fetch(MINBAR_API + '/v1/catalog', { headers: UA });
+  if (!res.ok) throw new Error('minbar-api HTTP ' + res.status);
+  const data = await res.json();
+  if (!data || !Array.isArray(data.lessons) || data.lessons.length < 50) throw new Error('minbar-api: كتالوج ناقص');
+  apiCache = { at: Date.now(), data };
+  return data;
+}
+async function snapshotCatalog() {
+  const res = await fetch(FALLBACK_URL, { headers: UA });
+  if (!res.ok) throw new Error('snapshot HTTP ' + res.status);
+  const data = await res.json();
+  data.stale = true;
+  return data;
+}
+/* وثيقة بشكل الكتالوج النهائي تُعاد إلى الشكل الذي تفهمه toLesson/toCategory
+   (تقرأ updatedAt/publishAt/featuredUntil بأسمائها الخام). */
+function rawFromFinal(o) {
+  if (!o) return null;
+  return Object.assign({}, o, {
+    updatedAt: o.updatedAtMs, publishAt: o.publishAtMs, createdAt: o.createdAtMs,
+  });
+}
 
 const PROJECT = 'mxqp-8d1e8';
 const API_KEY = 'AIzaSyCWAHqbzhfQ-ZcjSSVCAhFFqCTgQ66SdCs'; // علني مقصود
@@ -58,6 +93,14 @@ async function runQuery(structuredQuery) {
 }
 
 async function fetchCollection(collectionId, mapDoc) {
+  // 1) minbar-api ثم 2) اللقطة — كلاهما بالشكل النهائي فلا يحتاجان mapDoc.
+  for (const source of [apiCatalog, snapshotCatalog]) {
+    try {
+      const data = await source();
+      if (Array.isArray(data[collectionId])) return data[collectionId];
+    } catch (_) { /* نجرّب التالي */ }
+  }
+  // 3) Firestore REST — الملاذ الأخير.
   const items = [];
   let lastName = null;
   for (;;) {
@@ -84,6 +127,17 @@ async function fetchCollection(collectionId, mapDoc) {
 /* جلب وثيقة واحدة بالمعرّف — أرخص بكثير من مسح المجموعة كلها،
    وهو ما تحتاجه صفحة الدرس المفردة. */
 async function fetchDoc(collectionId, id) {
+  try {
+    if (collectionId === 'lessons') {
+      const res = await fetch(MINBAR_API + '/v1/lessons/' + encodeURIComponent(id), { headers: UA });
+      if (res.ok) return rawFromFinal(await res.json());
+      if (res.status === 404) return null;
+    } else {
+      const data = await apiCatalog();
+      const hit = (data[collectionId] || []).find((x) => x.id === id);
+      if (hit) return rawFromFinal(hit);
+    }
+  } catch (_) { /* Firestore أدناه */ }
   const url =
     'https://firestore.googleapis.com/v1/projects/' + PROJECT +
     '/databases/(default)/documents/' + collectionId + '/' +
@@ -169,6 +223,8 @@ const isPublished = (l, now) => l.publishAtMs == null || l.publishAtMs <= (now |
 
 module.exports = {
   SITE,
+  MINBAR_API,
+  apiCatalog,
   fetchCollection,
   fetchDoc,
   toCategory,
