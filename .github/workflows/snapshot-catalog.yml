@@ -1,0 +1,62 @@
+# تجديد لقطة الكتالوج الاحتياطية — يومياً وبلا أيّ تدخّل.
+#
+# اللقطة (`api/catalog-fallback.json`) هي ما يُقدَّم للناس إن سقط المصدر (حصّة أو
+# فوترة أو عطل)، وكانت تُجدَّد بتشغيل `tools/snapshot-catalog.js` على جهاز المالك
+# ثمّ دفعها يدوياً — فتبقى قديمة متى انطفأ جهازه. صارت هنا: سحابيّة بلا جهازه
+# وبلا تدخّله (أمر المالك 2026-09-11).
+#
+# ⛔ بلا أيّ سرّ: المصدر عامّ القراءة، والالتزام برمز المستودع المدمج وحده
+# (`GITHUB_TOKEN` مقيَّد بهذا المستودع وينتهي بانتهاء التشغيل).
+name: snapshot-catalog
+
+on:
+  schedule:
+    # 03:37 بتوقيت UTC — دقيقة غير مستديرة كي لا تزدحم مع جدولة العالم.
+    - cron: '37 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot-catalog
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: جلب الكتالوج من مصدر الحقيقة
+        run: |
+          set -euo pipefail
+          curl -sS --fail --max-time 60 --retry 3 --retry-delay 5 \
+            "https://minbar-api.mushafak.workers.dev/v1/catalog" -o fresh.json
+          node -e '
+            const d = JSON.parse(require("fs").readFileSync("fresh.json", "utf8"));
+            // ⛔ لا تُكتب لقطةٌ ناقصة فوق سليمة: عددٌ معلَن يخالف المصفوفة، أو
+            // مكتبةٌ أصغر من حدٍّ معقول، أو لقطةٌ مأخوذة من لقطةٍ (stale).
+            if (d.stale) throw new Error("المصدر يقدّم لقطةً — لا تُجدَّد من نفسها");
+            if (!Array.isArray(d.lessons) || d.lessons.length < 100) throw new Error("دروس: " + (d.lessons || []).length);
+            if (d.counts.lessons !== d.lessons.length) throw new Error("العدّ لا يطابق المصفوفة");
+            const withAudio = d.lessons.filter((l) => l.audioUrl).length;
+            if (withAudio < d.lessons.length * 0.9) throw new Error("روابط صوت ناقصة: " + withAudio);
+            d.snapshotAt = d.generatedAt;
+            require("fs").writeFileSync("api/catalog-fallback.json", JSON.stringify(d));
+            console.log("lessons=" + d.lessons.length + " withAudio=" + withAudio);
+          '
+
+      - name: الالتزام إن تغيّرت
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- api/catalog-fallback.json; then
+            echo "لا تغيير — لا التزام."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/catalog-fallback.json
+          git commit -m "تجديد لقطة الكتالوج الاحتياطية (آليّ)"
+          git push
