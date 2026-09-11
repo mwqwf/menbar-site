@@ -2,6 +2,15 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/transcode.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 300,
+        "memory": 1024,
+        "includeFiles": "node_modules/{ffmpeg-static,ffprobe-static}/**"
+      }
+    },
+    {
       "src": "api/**/*.js",
       "use": "@vercel/node",
       "config": {
@@ -17,6 +26,10 @@
     {
       "src": "^/api/catalog/?$",
       "dest": "/api/catalog.js"
+    },
+    {
+      "src": "^/api/transcode/?$",
+      "dest": "/api/transcode.js"
     },
     {
       "src": "^/audio/([0-9a-f]{64})\\.ogg$",

@@ -1,0 +1,9 @@
+{
+  "name": "menbar-site",
+  "private": true,
+  "description": "موقع منبر ادكصهك: الواجهة العامة والعرض الخادمي وخطّ ترميز الصوت",
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0"
+  }
+}
