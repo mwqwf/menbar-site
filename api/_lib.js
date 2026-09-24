@@ -4,9 +4,8 @@
 
    ⭐ 2026-09-10: المصدر الأول صار **minbar-api** (Cloudflare Workers + D1)
    بعد عطل فوترة Firebase؛ وهو يعيد الكتالوج بالشكل النهائي نفسه (العقد
-   مع تطبيق أندرويد). الترتيب: minbar-api → اللقطة الاحتياطية على jsDelivr
-   → Firestore REST (يبقى أخيراً حتى يُطفأ المشروع نهائياً).
-   لا أسرار هنا: مفتاح الويب علني بحكم تصميم Firebase.
+   مع تطبيق أندرويد). الترتيب: minbar-api → اللقطة الاحتياطية على jsDelivr.
+   (كان Firestore REST ملاذاً ثالثاً؛ حُذف لأنّ بياناته متجمّدة منذ الهجرة.)
    ============================================================ */
 'use strict';
 const MINBAR_API = process.env.MINBAR_API || 'https://minbar-api.mushafak.workers.dev';
@@ -41,34 +40,7 @@ function rawFromFinal(o) {
   });
 }
 
-const PROJECT = 'mxqp-8d1e8';
-const API_KEY = 'AIzaSyCWAHqbzhfQ-ZcjSSVCAhFFqCTgQ66SdCs'; // علني مقصود
-const RUN_QUERY_URL =
-  'https://firestore.googleapis.com/v1/projects/' + PROJECT +
-  '/databases/(default)/documents:runQuery?key=' + API_KEY;
-const PAGE_SIZE = 300;
-
 const SITE = 'https://minbar-adkassahk.vercel.app';
-
-function decodeValue(v) {
-  if (v == null) return null;
-  if ('stringValue' in v) return v.stringValue;
-  if ('integerValue' in v) return Number(v.integerValue);
-  if ('doubleValue' in v) return v.doubleValue;
-  if ('booleanValue' in v) return v.booleanValue;
-  if ('timestampValue' in v) return v.timestampValue;
-  if ('nullValue' in v) return null;
-  if ('mapValue' in v) return decodeFields((v.mapValue && v.mapValue.fields) || {});
-  if ('arrayValue' in v) return ((v.arrayValue && v.arrayValue.values) || []).map(decodeValue);
-  if ('referenceValue' in v) return v.referenceValue;
-  return null;
-}
-
-function decodeFields(fields) {
-  const out = {};
-  for (const k in fields) out[k] = decodeValue(fields[k]);
-  return out;
-}
 
 const unwrap = (d) => (d && typeof d.data === 'object' && d.data !== null ? d.data : d);
 const text = (v) => (v == null ? '' : String(v).trim());
@@ -82,46 +54,15 @@ function timeMillis(v) {
   return 0;
 }
 
-async function runQuery(structuredQuery) {
-  const res = await fetch(RUN_QUERY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ structuredQuery }),
-  });
-  if (!res.ok) throw new Error('Firestore HTTP ' + res.status);
-  return res.json();
-}
-
-async function fetchCollection(collectionId, mapDoc) {
-  // 1) minbar-api ثم 2) اللقطة — كلاهما بالشكل النهائي فلا يحتاجان mapDoc.
+async function fetchCollection(collectionId) {
+  // 1) minbar-api ثم 2) اللقطة — كلاهما بالشكل النهائي.
   for (const source of [apiCatalog, snapshotCatalog]) {
     try {
       const data = await source();
       if (Array.isArray(data[collectionId])) return data[collectionId];
     } catch (_) { /* نجرّب التالي */ }
   }
-  // 3) Firestore REST — الملاذ الأخير.
-  const items = [];
-  let lastName = null;
-  for (;;) {
-    const q = {
-      from: [{ collectionId }],
-      orderBy: [{ field: { fieldPath: '__name__' }, direction: 'ASCENDING' }],
-      limit: PAGE_SIZE,
-    };
-    if (lastName) q.startAt = { values: [{ referenceValue: lastName }], before: false };
-    const rows = await runQuery(q);
-    let count = 0;
-    for (const row of rows) {
-      if (!row.document) continue;
-      count++;
-      lastName = row.document.name;
-      const id = row.document.name.split('/').pop();
-      items.push(mapDoc(id, decodeFields(row.document.fields || {})));
-    }
-    if (count < PAGE_SIZE) break;
-  }
-  return items;
+  throw new Error('تعذّر الكتالوج من minbar-api ومن اللقطة');
 }
 
 /* جلب وثيقة واحدة بالمعرّف — أرخص بكثير من مسح المجموعة كلها،
@@ -137,16 +78,11 @@ async function fetchDoc(collectionId, id) {
       const hit = (data[collectionId] || []).find((x) => x.id === id);
       if (hit) return rawFromFinal(hit);
     }
-  } catch (_) { /* Firestore أدناه */ }
-  const url =
-    'https://firestore.googleapis.com/v1/projects/' + PROJECT +
-    '/databases/(default)/documents/' + collectionId + '/' +
-    encodeURIComponent(id) + '?key=' + API_KEY;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const doc = await res.json();
-  if (!doc || !doc.fields) return null;
-  return decodeFields(doc.fields);
+  } catch (_) { /* اللقطة أدناه */ }
+  try {
+    const hit = ((await snapshotCatalog())[collectionId] || []).find((x) => x.id === id);
+    return hit ? rawFromFinal(hit) : null;
+  } catch (_) { return null; }
 }
 
 /* `createdAt` رقمياً باسمه الأصلي أيضاً + `updatedAtMs`: تطبيق أندرويد صار
