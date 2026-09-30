@@ -1,6 +1,6 @@
 /* ============================================================
    منبر ادكصهك — تطبيق الويب (ملف واحد، بلا تبعيّات)
-   - يقرأ نفس بيانات تطبيق أندرويد مباشرة من Firestore (REST)
+   - يقرأ كتالوج تطبيق أندرويد نفسه من `/api/catalog` (minbar-api ثم اللقطة)
    - مكتبة → أقسام فرعية → دروس، بحث عربي مطبَّع، مشغّل سفلي دائم
    - تخصيص محلي بالكامل عبر localStorage (لا حسابات)
    ============================================================ */
@@ -9,16 +9,13 @@
 
   /* ------------------------------------------------------------
      ثوابت
-     المفتاح عام ومقصود نشره: هو نفسه المفتاح المضمَّن في تطبيق
-     أندرويد مفتوح المصدر، وقواعد Firestore تسمح بالقراءة فقط.
+     الكتالوج من `/api/catalog` على نطاق الموقع نفسه: يقرأ minbar-api ثم
+     اللقطة الاحتياطية، فيصل حتى على الشبكات التي تحجب Cloudflare. كان
+     المشغّل يقرأ Firestore مباشرةً، ومصدرُ الحقيقة انتقل إلى D1 في
+     2026-09-10، فبقي الموقع يعرض كتالوجاً متجمّداً لا تدخله الدروس الجديدة.
      ------------------------------------------------------------ */
-  const PROJECT = 'mxqp-8d1e8';
-  const API_KEY = 'AIzaSyCWAHqbzhfQ-ZcjSSVCAhFFqCTgQ66SdCs';
-  const RUN_QUERY_URL =
-    'https://firestore.googleapis.com/v1/projects/' + PROJECT +
-    '/databases/(default)/documents:runQuery?key=' + API_KEY;
-  const PAGE_SIZE = 300;              // نفس حجم صفحة الدروس في التطبيق
-  const CACHE_KEY = 'menbar_catalog_v2';
+  const CATALOG_URL = '/api/catalog';
+  const CACHE_KEY = 'menbar_catalog_v3'; // v3: مصدر جديد، فلا يُعرض كاش Firestore القديم
   const CACHE_TTL_MS = 5 * 60 * 1000; // طزاجة الكتالوج قبل تحديث خلفي
   const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.ali.menbaradkshk';
   const GITHUB_URL = 'https://github.com/mwqwf';
@@ -73,131 +70,20 @@
 
   const fmtNum = (n) => Number(n || 0).toLocaleString('ar-EG');
 
-  /* ------------------------------------------------------------
-     فكّ ترميز قيم Firestore REST إلى قيم JavaScript عادية
-     ------------------------------------------------------------ */
-  function decodeValue(v) {
-    if (v == null) return null;
-    if ('stringValue' in v) return v.stringValue;
-    if ('integerValue' in v) return Number(v.integerValue);
-    if ('doubleValue' in v) return v.doubleValue;
-    if ('booleanValue' in v) return v.booleanValue;
-    if ('timestampValue' in v) return v.timestampValue; // ISO string
-    if ('nullValue' in v) return null;
-    if ('mapValue' in v) return decodeFields((v.mapValue && v.mapValue.fields) || {});
-    if ('arrayValue' in v) return ((v.arrayValue && v.arrayValue.values) || []).map(decodeValue);
-    if ('referenceValue' in v) return v.referenceValue;
-    return null;
-  }
-  function decodeFields(fields) {
-    const out = {};
-    for (const k in fields) out[k] = decodeValue(fields[k]);
-    return out;
-  }
-
-  /* ------------------------------------------------------------
-     تحويل الوثائق إلى نماذج — بنفس دلالات Models.kt في التطبيق
-     ------------------------------------------------------------ */
-
-  /** بعض الوثائق القديمة مغلَّفة داخل حقل data — كما في التطبيق. */
-  function unwrap(data) {
-    return data && typeof data.data === 'object' && data.data !== null ? data.data : data;
-  }
-  const text = (v) => (v == null ? '' : String(v).trim());
-  function longValue(v) {
-    const n = Number(v);
-    return isFinite(n) ? n : 0;
-  }
-  /** طابع زمني بالمللي: رقم أو نص ISO أو {seconds}. */
-  function timeMillis(v) {
-    if (v == null) return 0;
-    if (typeof v === 'number') return v;
-    if (typeof v === 'string') {
-      const t = Date.parse(v);
-      return isNaN(t) ? (Number(v) || 0) : t;
-    }
-    if (typeof v === 'object' && v.seconds != null) return Number(v.seconds) * 1000;
-    return 0;
-  }
-
-  function toCategory(id, raw) {
-    const d = unwrap(raw);
-    return { id, name: text(d.name), createdAtMs: timeMillis(d.createdAt) };
-  }
-  function toSubcategory(id, raw) {
-    const d = unwrap(raw);
-    return {
-      id,
-      name: text(d.name),
-      categoryId: text(d.categoryId),
-      createdAtMs: timeMillis(d.createdAt),
-    };
-  }
-  function toLesson(id, raw) {
-    const d = unwrap(raw);
-    const publishAt = d.publishAt != null ? timeMillis(d.publishAt) : 0;
-    let subId = text(d.subcategoryId);
-    if (!subId && d.subcategory && typeof d.subcategory === 'object') {
-      subId = text(d.subcategory._id);
-    }
-    return {
-      id,
-      title: text(d.title) || text(d.name),
-      categoryId: text(d.categoryId),
-      subcategoryId: subId,
-      audioUrl: text(d.audioUrl),
-      createdAtMs: timeMillis(d.createdAt),
-      views: longValue(d.views),
-      // التطبيق يقرأ speaker/sheikh/reader — ونضيف sheikhName الموجود فعلاً بالبيانات
-      speaker: text(d.speaker) || text(d.sheikh) || text(d.reader) || text(d.sheikhName),
-      description: text(d.description),
-      durationMs: longValue(d.durationMs) || longValue(d.duration),
-      featured: d.featured === true,
-      featuredUntilMs: timeMillis(d.featuredUntil),
-      publishAtMs: publishAt > 0 ? publishAt : null,
-    };
-  }
   /** عنوان العرض — نفس منطق displayTitle في التطبيق. */
   const displayTitle = (l) => l.title || l.speaker || 'درس صوتي';
   /** منشور الآن؟ (الدروس المجدولة تُخزَّن في نفس المجموعة وتُرشَّح محلياً). */
   const isPublished = (l) => l.publishAtMs == null || l.publishAtMs <= Date.now();
 
   /* ------------------------------------------------------------
-     الجلب من Firestore عبر runQuery (بترقيم مستقرّ على __name__)
+     الجلب: الكتالوج بشكله النهائي (العقد نفسه مع تطبيق أندرويد)
      ------------------------------------------------------------ */
-  async function runQuery(structuredQuery) {
-    const res = await fetch(RUN_QUERY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ structuredQuery }),
-    });
-    if (!res.ok) throw new Error('Firestore HTTP ' + res.status);
-    return res.json();
-  }
-
-  /** يجلب مجموعة كاملة على صفحات — الترتيب بمعرّف الوثيقة كما في التطبيق. */
-  async function fetchCollection(collectionId, mapDoc) {
-    const items = [];
-    let lastName = null;
-    for (;;) {
-      const q = {
-        from: [{ collectionId }],
-        orderBy: [{ field: { fieldPath: '__name__' }, direction: 'ASCENDING' }],
-        limit: PAGE_SIZE,
-      };
-      if (lastName) q.startAt = { values: [{ referenceValue: lastName }], before: false };
-      const rows = await runQuery(q);
-      let count = 0;
-      for (const row of rows) {
-        if (!row.document) continue;
-        count++;
-        lastName = row.document.name;
-        const id = row.document.name.split('/').pop();
-        items.push(mapDoc(id, decodeFields(row.document.fields || {})));
-      }
-      if (count < PAGE_SIZE) break;
-    }
-    return items;
+  async function fetchCatalog() {
+    const res = await fetch(CATALOG_URL, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('catalog HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.lessons)) throw new Error('كتالوج بلا دروس');
+    return [data.categories || [], data.subcategories || [], data.lessons];
   }
 
   /* ------------------------------------------------------------
@@ -238,11 +124,7 @@
     state.syncing = true;
     setSyncNote(state.loaded); // «يتم التحديث…» فقط حين يوجد محتوى معروض
     try {
-      const [categories, subcategories, lessons] = await Promise.all([
-        fetchCollection('categories', toCategory),
-        fetchCollection('subcategories', toSubcategory),
-        fetchCollection('lessons', toLesson),
-      ]);
+      const [categories, subcategories, lessons] = await fetchCatalog();
       applyCatalog(categories, subcategories, lessons);
       state.error = null;
       store.set(CACHE_KEY, { at: Date.now(), categories, subcategories, lessons });

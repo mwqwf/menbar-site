@@ -45,7 +45,7 @@
     },
     {
       "src": "^/assets/(.*)$",
-      "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@9f57e08cf9f4f8f0c16f7c0be14a4e864e435627/assets/$1"
+      "dest": "https://cdn.jsdelivr.net/gh/mwqwf/menbar-site@72fc90a1bc170f72d353e55805b67abef4cee11c/assets/$1"
     },
     {
       "src": "^/robots\\.txt$",
