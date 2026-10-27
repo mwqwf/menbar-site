@@ -33,7 +33,54 @@
     },
     {
       "src": "^/audio/([0-9a-f]{64})\\.ogg$",
-      "dest": "/api/audio.js"
+      "methods": [
+        "OPTIONS"
+      ],
+      "status": 204,
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Range, If-None-Match",
+        "Cache-Control": "no-store"
+      }
+    },
+    {
+      "src": "^/audio/([0-9a-f]{64})\\.ogg$",
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "dest": "https://media.menbar.app/serving/$1.ogg",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, ETag",
+        "x-vercel-enable-rewrite-caching": "1"
+      },
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "delete",
+          "target": {
+            "key": "authorization"
+          }
+        },
+        {
+          "type": "request.headers",
+          "op": "delete",
+          "target": {
+            "key": "cookie"
+          }
+        }
+      ]
+    },
+    {
+      "src": "^/audio/([0-9a-f]{64})\\.ogg$",
+      "status": 405,
+      "headers": {
+        "Allow": "GET, HEAD, OPTIONS",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store"
+      }
     },
     {
       "src": "^/v1/(.*)$",
