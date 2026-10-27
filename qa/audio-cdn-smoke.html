@@ -23,10 +23,11 @@ async function test(name,fn){
   try{await fn();passed++;li.className='pass';li.textContent='نجح: '+name}
   catch(e){failed++;li.className='fail';li.textContent='فشل: '+name+' — '+e.message}
 }
-async function request(path,options={},limit=4096){
+async function request(path,options={},limit=4096,discardBody=false){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
   try{
     const response=await fetch(path,{...options,credentials:'same-origin',redirect:'error',signal:controller.signal});
+    if(discardBody){if(response.body)await response.body.cancel();return {response,bytes:new Uint8Array(0)}}
     const chunks=[];let size=0;
     if(response.body){
       const reader=response.body.getReader();
@@ -85,7 +86,7 @@ document.querySelector('#run').onclick=async()=>{
   }
   const missing='/audio/'+'0'.repeat(64)+'.ogg';
   await test('ملف مفقود لا يتحول إلى نجاح',async()=>{
-    const {response:r}=await request(missing,{},16384);check(r.status===404,'الرمز '+r.status);
+    const {response:r}=await request(missing,{},0,true);check(r.status===404,'الرمز '+r.status);
   });
   await test('بصمة غير صالحة لا تصل إلى الصوت',async()=>{
     const {response:r}=await request('/audio/invalid.ogg',{},16384);
