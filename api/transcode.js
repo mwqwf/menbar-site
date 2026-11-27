@@ -51,20 +51,16 @@ async function measureLoudness(ffmpeg, file, opus = false) {
 
 /** المرور الثاني: كسبٌ ثابت إلى −18 LUFS ثمّ محدِّد قمم عند −4 dBFS (هامشٌ لتجاوز Opus
  *  فيبقى الناتج ≤ −1.5 dBTP). أسرع بكثير من loudnorm الديناميكي (لا رفع إلى 192k)،
- *  ولا يغيّر ديناميكية الكلام. الكسب حتى +18 dB، وما فوق +10 يسبقه تنقية ضجيج خفيفة. */
+ *  ولا يغيّر ديناميكية الكلام. الكسب محدود بـ+10 dB كي لا يُضخَّم ضجيج تسجيلٍ خافت
+ *  (تقييم الترميم: تنقية الضجيج لم تُفِد) — والمصدر الخافت جداً يبقى دون −18. */
 const LIMIT_DBFS = -4;
-const MAX_GAIN_DB = 18;
-/** فوق هذا الكسب يُرفع ضجيج التسجيل الخافت مسموعاً، فيسبق الرفعَ تنقيةٌ خفيفة آمنة
- *  (قد يحسّنها لاحقاً عامل الترميم). */
-const DENOISE_ABOVE_DB = 10;
-const DENOISE = 'afftdn=nr=12:nf=-50:tn=1';
+const MAX_GAIN_DB = 10;
 function levelFilter(m, trimDb = 0) {
   // التقليم يخفض سقف المحدِّد لا الكسبَ قبله: القمم بعد المحدِّد عند سقفه مهما قلّ الكسب،
   // فتقليم الكسب وحده لا يخفض تجاوز Opus (قياس m4a هادئ: −0.9 dBTP بعد إعادة).
   const gain = (m ? Math.min(MAX_GAIN_DB, TARGET_LUFS - m.i) : 0);
   const limit = Math.pow(10, (LIMIT_DBFS - trimDb) / 20).toFixed(4);
-  const pre = gain > DENOISE_ABOVE_DB ? `${DENOISE},` : '';
-  return `${pre}volume=${gain.toFixed(2)}dB,alimiter=limit=${limit}:attack=5:release=50:level=disabled`;
+  return `volume=${gain.toFixed(2)}dB,alimiter=limit=${limit}:attack=5:release=50:level=disabled`;
 }
 
 function run(bin, args, opts = {}, keep = 4000) {
