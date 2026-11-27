@@ -32,9 +32,16 @@ const TARGET_TP = -1.5;
 const KEEP_MAX_TP = -1.0;
 const KEEP_LUFS_TOLERANCE = 3;
 
+/**
+ * مفكّك Opus المرجعيّ (libopus) لا مفكّك ffmpeg الأصليّ: الأصليّ يسيء فكّ مقاطع SILK
+ * (ملاحظات واتساب الصوتيّة) فيرفعها ~١١ dB ويقصّها، بينما أندرويد
+ * يفكّ بمفكّكٍ مرجعيّ. فالقياس وإعادة الترميز يجب أن يريا ما يراه المستمع.
+ */
+const decoderFor = (opus) => (opus ? ['-c:a', 'libopus'] : []);
+
 /** قياس العلوّ المتكامل والقمّة الحقيقية (EBU R128) — يُعاد {i, tp} أو null. */
-async function measureLoudness(ffmpeg, file) {
-  const err = await run(ffmpeg, ['-hide_banner', '-nostats', '-i', file, '-vn', '-ac', '1',
+async function measureLoudness(ffmpeg, file, opus = false) {
+  const err = await run(ffmpeg, ['-hide_banner', '-nostats', ...decoderFor(opus), '-i', file, '-vn', '-ac', '1',
     '-af', 'ebur128=peak=true:framelog=quiet', '-f', 'null', '-'], {}, 4000);
   const sum = err.slice(err.lastIndexOf('Summary:'));
   const i = Number((sum.match(/I:\s+(-?[\d.]+) LUFS/) || [])[1]);
@@ -119,12 +126,13 @@ module.exports = async (req, res) => {
 
     // 2) القياس ثمّ الترميز — أو الإبقاء إن كان opus مضغوطاً وعلوّه وقمّته سليمين.
     const info = await probe(ffprobe, src);
-    const loud = await measureLoudness(ffmpeg, src);
+    const srcOpus = info.codec === 'opus';
+    const loud = await measureLoudness(ffmpeg, src, srcOpus);
     const compressedOpus = info.codec === 'opus' && info.bitRate > 0 && info.bitRate <= KEEP_MAX_BPS;
     const keepAsIs = compressedOpus && !!loud && loud.tp <= KEEP_MAX_TP
       && Math.abs(loud.i - TARGET_LUFS) <= KEEP_LUFS_TOLERANCE;
     const kbps = compressedOpus ? OPUS_REENCODE_KBPS : OPUS_KBPS;
-    const encode = (trimDb) => run(ffmpeg, ['-v', 'error', '-y', '-i', src, '-vn', '-ac', '1',
+    const encode = (trimDb) => run(ffmpeg, ['-v', 'error', '-y', ...decoderFor(srcOpus), '-i', src, '-vn', '-ac', '1',
       '-af', levelFilter(loud, trimDb), '-ar', '48000', '-c:a', 'libopus', '-b:a', `${kbps}k`, '-vbr', 'on',
       '-application', 'audio', '-frame_duration', '20', '-f', 'ogg', out]);
     let outLoud = null;
@@ -133,10 +141,10 @@ module.exports = async (req, res) => {
     } else {
       await encode(0);
       // تحقّق الناتج: إن تجاوزت القمّةُ الحقيقية السقفَ (تجاوز Opus بين العيّنات) يُعاد مرّةً بكسبٍ أقلّ.
-      outLoud = await measureLoudness(ffmpeg, out);
+      outLoud = await measureLoudness(ffmpeg, out, true);
       if (outLoud && outLoud.tp > TARGET_TP) {
         await encode(outLoud.tp - TARGET_TP + 0.3);
-        outLoud = await measureLoudness(ffmpeg, out);
+        outLoud = await measureLoudness(ffmpeg, out, true);
       }
     }
 
