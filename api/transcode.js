@@ -55,8 +55,10 @@ async function measureLoudness(ffmpeg, file, opus = false) {
 const LIMIT_DBFS = -4;
 const MAX_GAIN_DB = 10;
 function levelFilter(m, trimDb = 0) {
-  const gain = (m ? Math.min(MAX_GAIN_DB, TARGET_LUFS - m.i) : 0) - trimDb;
-  const limit = Math.pow(10, LIMIT_DBFS / 20).toFixed(4);
+  // التقليم يخفض سقف المحدِّد لا الكسبَ قبله: القمم بعد المحدِّد عند سقفه مهما قلّ الكسب،
+  // فتقليم الكسب وحده لا يخفض تجاوز Opus (قياس m4a هادئ: −0.9 dBTP بعد إعادة).
+  const gain = (m ? Math.min(MAX_GAIN_DB, TARGET_LUFS - m.i) : 0);
+  const limit = Math.pow(10, (LIMIT_DBFS - trimDb) / 20).toFixed(4);
   return `volume=${gain.toFixed(2)}dB,alimiter=limit=${limit}:attack=5:release=50:level=disabled`;
 }
 
