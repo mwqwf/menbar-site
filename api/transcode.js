@@ -24,8 +24,8 @@ const API = process.env.MINBAR_API || 'https://minbar-api.mushafak.workers.dev';
 const KEEP_MAX_BPS = 48000;
 /** الكلام الأحادي: 40k VBR يحفظ عرض الحزمة كاملاً بلا أثر مسموع (قياس 2026-11-27). */
 const OPUS_KBPS = 40;
-/** مصدرٌ opus مضغوط أصلاً يُعاد ترميزه للعلوّ فقط: لا فائدة من معدّل أعلى من هذا. */
-const OPUS_REENCODE_KBPS = 32;
+/** مصدرٌ opus يُعاد ترميزه بالمعدّل نفسه: تجربة الاستماع أولى من فرق الحجم الصغير. */
+const OPUS_REENCODE_KBPS = 40;
 const TARGET_LUFS = -18;
 const TARGET_TP = -1.5;
 /** قمّة/علوّ مقبولان للإبقاء على opus كما هو. */
@@ -51,15 +51,20 @@ async function measureLoudness(ffmpeg, file, opus = false) {
 
 /** المرور الثاني: كسبٌ ثابت إلى −18 LUFS ثمّ محدِّد قمم عند −4 dBFS (هامشٌ لتجاوز Opus
  *  فيبقى الناتج ≤ −1.5 dBTP). أسرع بكثير من loudnorm الديناميكي (لا رفع إلى 192k)،
- *  ولا يغيّر ديناميكية الكلام. الكسب محدود بـ+10 dB كي لا يُضخَّم ضجيج تسجيلٍ خافت. */
+ *  ولا يغيّر ديناميكية الكلام. الكسب حتى +18 dB، وما فوق +10 يسبقه تنقية ضجيج خفيفة. */
 const LIMIT_DBFS = -4;
-const MAX_GAIN_DB = 10;
+const MAX_GAIN_DB = 18;
+/** فوق هذا الكسب يُرفع ضجيج التسجيل الخافت مسموعاً، فيسبق الرفعَ تنقيةٌ خفيفة آمنة
+ *  (قد يحسّنها لاحقاً عامل الترميم). */
+const DENOISE_ABOVE_DB = 10;
+const DENOISE = 'afftdn=nr=12:nf=-50:tn=1';
 function levelFilter(m, trimDb = 0) {
   // التقليم يخفض سقف المحدِّد لا الكسبَ قبله: القمم بعد المحدِّد عند سقفه مهما قلّ الكسب،
   // فتقليم الكسب وحده لا يخفض تجاوز Opus (قياس m4a هادئ: −0.9 dBTP بعد إعادة).
   const gain = (m ? Math.min(MAX_GAIN_DB, TARGET_LUFS - m.i) : 0);
   const limit = Math.pow(10, (LIMIT_DBFS - trimDb) / 20).toFixed(4);
-  return `volume=${gain.toFixed(2)}dB,alimiter=limit=${limit}:attack=5:release=50:level=disabled`;
+  const pre = gain > DENOISE_ABOVE_DB ? `${DENOISE},` : '';
+  return `${pre}volume=${gain.toFixed(2)}dB,alimiter=limit=${limit}:attack=5:release=50:level=disabled`;
 }
 
 function run(bin, args, opts = {}, keep = 4000) {
