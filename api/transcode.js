@@ -155,6 +155,10 @@ module.exports = async (req, res) => {
     const sha = crypto.createHash('sha256').update(bytes).digest('hex');
     const durationSeconds = (await probe(ffprobe, out)).duration || info.duration;
 
+    // علوّ التشغيل للتطبيق (41+): −18 − LUFS الناتج (مقيساً بـlibopus)، محصوراً في [−6، +12].
+    const finalLoud = keepAsIs ? loud : outLoud;
+    const gainDb = finalLoud ? Math.round(Math.max(-6, Math.min(12, TARGET_LUFS - finalLoud.i)) * 10) / 10 : null;
+
     // 3) الرفع ثمّ التثبيت — الكتابة في الوثيقة آخر خطوة دائماً.
     const put = await fetch(`${API}/admin/upload/serving/${sha}.ogg`, {
       method: 'PUT', headers: { ...auth, 'Content-Type': 'audio/ogg' }, body: bytes,
@@ -163,14 +167,14 @@ module.exports = async (req, res) => {
 
     const patch = await fetch(`${API}/admin/lessons/${encodeURIComponent(lessonId)}/audio`, {
       method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sha256: sha, durationSeconds }),
+      body: JSON.stringify({ sha256: sha, durationSeconds, ...(gainDb !== null ? { gainDb } : {}) }),
     });
     const patched = await patch.json().catch(() => ({}));
     if (!patch.ok) throw new Error(`تعذّر تثبيت الدرس (${patch.status}) ${patched.error || ''}`);
 
     cleanup();
     return res.status(200).json({
-      ok: true, lessonId, sha256: sha, sizeBytes: bytes.length, durationSeconds, keptAsIs: keepAsIs,
+      ok: true, lessonId, sha256: sha, sizeBytes: bytes.length, durationSeconds, gainDb, keptAsIs: keepAsIs,
       kbps: keepAsIs ? null : kbps, loudness: loud, output: outLoud,
     });
   } catch (e) {
